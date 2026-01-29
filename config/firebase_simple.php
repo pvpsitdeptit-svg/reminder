@@ -286,30 +286,4 @@ try {
 
 // Mock messaging
 $messaging = null;
-
-// Helper functions
-function firebaseKeyFromEmail($email) {
-    $email = strtolower(trim((string)$email));
-    $b64 = base64_encode($email);
-    $b64url = rtrim(strtr($b64, '+/', '-_'), '=');
-    return $b64url;
-}
-
-function firebaseEmailFromKey($key) {
-    $key = (string)$key;
-    $b64 = strtr($key, '-_', '+/');
-    $pad = strlen($b64) % 4;
-    if ($pad > 0) {
-        $b64 .= str_repeat('=', 4 - $pad);
-    }
-    $decoded = base64_decode($b64, true);
-    if ($decoded === false) {
-        return '';
-    }
-    return (string)$decoded;
-}
-
-function h($v) { 
-    return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); 
-}
 ?>
