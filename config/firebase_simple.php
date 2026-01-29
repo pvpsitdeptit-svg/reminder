@@ -85,7 +85,7 @@ class SimpleFirebaseDatabase {
             $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
             $claimSet = json_encode([
                 'iss' => $serviceAccountEmail,
-                'scope' => 'https://www.googleapis.com/auth/firebase.database',
+                'scope' => 'https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email',
                 'aud' => 'https://oauth2.googleapis.com/token',
                 'exp' => time() + 3600,
                 'iat' => time()
@@ -142,13 +142,14 @@ class SimpleFirebaseDatabase {
             throw new Exception('Could not get access token');
         }
         
+        // Use correct Firebase REST API format
+        $apiUrl = $url . '.json?access_token=' . $accessToken;
+        
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url . '.json');
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $accessToken
-        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
