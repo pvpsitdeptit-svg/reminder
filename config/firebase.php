@@ -72,37 +72,45 @@ DonICKNWoLnnuMpBXXoU+w==
 $FORCE_MOCK_MODE = false;
 
 try {
-    // Check if vendor/autoload.php exists and try SDK first
-    if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
-        require_once __DIR__ . '/../vendor/autoload.php';
-        
-        // Try to use SDK if all classes are available
-        if (class_exists('\Kreait\Firebase\Factory')) {
-            try {
-                // Initialize Firebase using SDK
-                $factory = new \Kreait\Firebase\Factory();
-                $factory = $factory
-                    ->withServiceAccount($serviceAccount)
-                    ->withDatabaseUri($firebaseConfig['databaseURL']);
-                
-                $database = $factory->createDatabase();
-                $messaging = $factory->createMessaging();
-                
-                // Don't test connection here to avoid ".info" key issue
-                // Let the actual data operations test the connection
-                
-            } catch (Exception $sdkError) {
-                // SDK failed, fall back to simple implementation
-                error_log("Firebase SDK failed, falling back to simple implementation: " . $sdkError->getMessage());
+    // Check if we're in production environment (Render) and force simple implementation
+    $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
+    
+    if ($isProduction) {
+        // Force simple implementation for production to avoid SDK dependency issues
+        require_once __DIR__ . '/firebase_simple.php';
+    } else {
+        // Development: try SDK first with fallback
+        if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+            require_once __DIR__ . '/../vendor/autoload.php';
+            
+            // Try to use SDK if all classes are available
+            if (class_exists('\Kreait\Firebase\Factory')) {
+                try {
+                    // Initialize Firebase using SDK
+                    $factory = new \Kreait\Firebase\Factory();
+                    $factory = $factory
+                        ->withServiceAccount($serviceAccount)
+                        ->withDatabaseUri($firebaseConfig['databaseURL']);
+                    
+                    $database = $factory->createDatabase();
+                    $messaging = $factory->createMessaging();
+                    
+                    // Don't test connection here to avoid ".info" key issue
+                    // Let the actual data operations test the connection
+                    
+                } catch (Exception $sdkError) {
+                    // SDK failed, fall back to simple implementation
+                    error_log("Firebase SDK failed, falling back to simple implementation: " . $sdkError->getMessage());
+                    require_once __DIR__ . '/firebase_simple.php';
+                }
+            } else {
+                // SDK classes not available, use simple implementation
                 require_once __DIR__ . '/firebase_simple.php';
             }
         } else {
-            // SDK classes not available, use simple implementation
+            // No vendor directory, use simple implementation
             require_once __DIR__ . '/firebase_simple.php';
         }
-    } else {
-        // No vendor directory, use simple implementation
-        require_once __DIR__ . '/firebase_simple.php';
     }
 } catch (Exception $e) {
     // For development, create a mock database if Firebase is not configured
