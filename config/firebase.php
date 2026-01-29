@@ -5,23 +5,32 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require_once __DIR__ . '/../vendor/autoload.php';
 }
 
-// Firebase configuration
+// Use environment variables for production, fallback to hardcoded values for development
 $firebaseConfig = [
-    'apiKey' => 'AIzaSyCpm5OhNvWksaGGot76Bwr9EpYb1CH4FvY',
-    'authDomain' => 'reminder-c0728.firebaseapp.com',
-    'databaseURL' => 'https://reminder-c0728-default-rtdb.firebaseio.com/',
-    'projectId' => 'reminder-c0728',
-    'storageBucket' => 'reminder-c0728.firebasestorage.app',
-    'messagingSenderId' => '987181259638',
-    'appId' => '1:987181259638:android:283e678c075059f9d7b857'
+    'apiKey' => $_ENV['FIREBASE_API_KEY'] ?? 'AIzaSyCpm5OhNvWksaGGot76Bwr9EpYb1CH4FvY',
+    'authDomain' => $_ENV['FIREBASE_AUTH_DOMAIN'] ?? 'reminder-c0728.firebaseapp.com',
+    'databaseURL' => $_ENV['FIREBASE_DATABASE_URL'] ?? 'https://reminder-c0728-default-rtdb.firebaseio.com/',
+    'projectId' => $_ENV['FIREBASE_PROJECT_ID'] ?? 'reminder-c0728',
+    'storageBucket' => $_ENV['FIREBASE_STORAGE_BUCKET'] ?? 'reminder-c0728.firebasestorage.app',
+    'messagingSenderId' => $_ENV['FIREBASE_MESSAGING_SENDER_ID'] ?? '987181259638',
+    'appId' => $_ENV['FIREBASE_APP_ID'] ?? '1:987181259638:android:283e678c075059f9d7b857'
 ];
 
-// Service account configuration - REPLACE WITH YOUR ACTUAL VALUES
-$serviceAccount = [
-    'type' => 'service_account',
-    'project_id' => 'reminder-c0728',
-    'private_key_id' => 'c3963d6947a947c3f0627bf29f460f83a285ff8e',
-    'private_key' => '-----BEGIN PRIVATE KEY-----
+// Service account configuration - Try environment first, then fallback
+$serviceAccountJson = $_ENV['FIREBASE_SERVICE_ACCOUNT'] ?? null;
+if ($serviceAccountJson) {
+    $serviceAccount = json_decode($serviceAccountJson, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        error_log("Invalid FIREBASE_SERVICE_ACCOUNT JSON: " . json_last_error_msg());
+        $serviceAccount = null;
+    }
+} else {
+    // Fallback to hardcoded values
+    $serviceAccount = [
+        'type' => 'service_account',
+        'project_id' => 'reminder-c0728',
+        'private_key_id' => 'c3963d6947a947c3f0627bf29f460f83a285ff8e',
+        'private_key' => '-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDNjXPGnNQFt2+1
 yGI6amOjqokx+wJGugJlUkEQb3IRPIkofj+UFd5DYULs4LLZpwNmY/eTCC74QO34
 872RHvYtObJ2bNKWoq0pdXr2mCd12uHM7VYBXH7+Lz6pRpHOTQtFUsRwVw+1Okju
@@ -49,11 +58,12 @@ nYV3LNdBmFnMp8nkm/Z8jo9IfKK8WypQIIGDgbrvNiW+1LnNhmUqbcBblSAkB7ik
 VCsfOCV6nV7P/pHXtxeW3qn5iW/GAvgEkXp0ViNhQ3EW4P6HdSr1bPrShwZ0qgs1
 DonICKNWoLnnuMpBXXoU+w==
 -----END PRIVATE KEY-----',
-    'client_email' => 'firebase-adminsdk-fbsvc@reminder-c0728.iam.gserviceaccount.com',
-    'client_id' => '108955683686626709101',
-    'auth_uri' => 'https://accounts.google.com/o/oauth2/auth',
-    'token_uri' => 'https://oauth2.googleapis.com/token'
-];
+        'client_email' => 'firebase-adminsdk-fbsvc@reminder-c0728.iam.gserviceaccount.com',
+        'client_id' => '108955683686626709101',
+        'auth_uri' => 'https://accounts.google.com/o/oauth2/auth',
+        'token_uri' => 'https://oauth2.googleapis.com/token'
+    ];
+}
 
 // IMPORTANT: Update the above values with your actual Firebase project details
 // Visit: config/firebase_setup_guide.php for detailed instructions
