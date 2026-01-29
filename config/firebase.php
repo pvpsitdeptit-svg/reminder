@@ -88,9 +88,8 @@ try {
                 $database = $factory->createDatabase();
                 $messaging = $factory->createMessaging();
                 
-                // Test if it works
-                $testRef = $database->getReference('.info/connected');
-                $testSnapshot = $testRef->getSnapshot();
+                // Don't test connection here to avoid ".info" key issue
+                // Let the actual data operations test the connection
                 
             } catch (Exception $sdkError) {
                 // SDK failed, fall back to simple implementation
