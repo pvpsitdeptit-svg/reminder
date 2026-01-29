@@ -29,6 +29,7 @@ desktop.ini
 .dockerignore
 
 # Composer
+vendor/
 composer.lock
 
 # Node modules (if any)

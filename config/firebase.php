@@ -74,17 +74,23 @@ $FORCE_MOCK_MODE = false;
 try {
     // Only try to initialize Firebase if vendor/autoload.php exists and Mock Mode is not forced
     if (!$FORCE_MOCK_MODE && file_exists(__DIR__ . '/../vendor/autoload.php')) {
-        // Initialize Firebase using fully qualified class name
-        $factory = new \Kreait\Firebase\Factory();
-        $factory = $factory
-            ->withServiceAccount($serviceAccount)
-            ->withDatabaseUri($firebaseConfig['databaseURL']);
-        
-        $database = $factory->createDatabase();
-        $messaging = $factory->createMessaging();
+        // Check if required Firebase classes exist
+        if (class_exists('\Kreait\Firebase\Factory')) {
+            // Initialize Firebase using fully qualified class name
+            $factory = new \Kreait\Firebase\Factory();
+            $factory = $factory
+                ->withServiceAccount($serviceAccount)
+                ->withDatabaseUri($firebaseConfig['databaseURL']);
+            
+            $database = $factory->createDatabase();
+            $messaging = $factory->createMessaging();
+        } else {
+            // Fall back to simple implementation
+            require_once __DIR__ . '/firebase_simple.php';
+        }
     } else {
-        // Use mock database if Mock Mode is forced or Firebase dependencies are not installed
-        throw new Exception('Mock mode forced or Firebase dependencies not installed - using mock database');
+        // Fall back to simple implementation
+        require_once __DIR__ . '/firebase_simple.php';
     }
 } catch (Exception $e) {
     // For development, create a mock database if Firebase is not configured
