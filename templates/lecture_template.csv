@@ -1,0 +1,11 @@
+day,time,name,faculty_id,faculty_email,subject,room
+Mon,09:00,Dr. Alice,FAC001,faculty001@university.edu,Mathematics,Room101
+Mon,10:00,Dr. Bob,FAC002,faculty002@university.edu,Physics,Room102
+Mon,11:00,Dr. Carol,FAC003,faculty003@university.edu,Chemistry,Room103
+Mon,14:00,Dr. Alice,FAC001,faculty001@university.edu,Mathematics,Room101
+Mon,15:00,Dr. Dan,FAC004,faculty004@university.edu,Biology,Room104
+Tue,09:00,Dr. Bob,FAC002,faculty002@university.edu,Physics,Room102
+Tue,10:00,Dr. Carol,FAC003,faculty003@university.edu,Chemistry,Room103
+Tue,11:00,Dr. Eve,FAC005,faculty005@university.edu,Computer Science,Lab201
+Tue,14:00,Dr. Dan,FAC004,faculty004@university.edu,Biology,Room104
+Tue,15:00,Dr. Alice,FAC001,faculty001@university.edu,Mathematics,Room101

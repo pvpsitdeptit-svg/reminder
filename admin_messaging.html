@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Messaging - Faculty Communication</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .message-card {
+            border-left: 4px solid #007bff;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .message-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .status-sent { border-left-color: #28a745; }
+        .status-delivered { border-left-color: #17a2b8; }
+        .status-failed { border-left-color: #dc3545; }
+        .message-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        .faculty-select {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .message-preview {
+            max-height: 100px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+        .delivery-badge {
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" href="index.php"><i class="bi bi-calendar-check"></i> Faculty Management System</a>
+    <div class="navbar-nav ms-auto">
+      <a class="nav-link text-white" href="manage_lectures.php"><i class="bi bi-book"></i> Manage Lectures</a>
+      <a class="nav-link text-white" href="manage_invigilation.php"><i class="bi bi-clipboard-check"></i> Manage Invigilation</a>
+      <a class="nav-link text-white" href="manage_faculty_leaves.php"><i class="bi bi-person-lines-fill"></i> Faculty Leaves</a>
+      <a class="nav-link text-white" href="manage_leave_availed.php"><i class="bi bi-journal-check"></i> Availed Entry</a>
+      <a class="nav-link text-white" href="leave_balance_report.php"><i class="bi bi-graph-up"></i> Balance Report</a>
+      <a class="nav-link text-white active" href="admin_messaging.html"><i class="bi bi-chat-dots"></i> Messaging</a>
+      <span class="navbar-text ms-2 me-3 d-none d-md-inline"><i class="bi bi-person-circle"></i> Admin</span>
+      <a class="nav-link text-white" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
+    </div>
+  </div>
+</nav>
+
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0"><i class="bi bi-chat-dots"></i> Faculty Messaging</h1>
+    <button type="button" class="btn btn-secondary" onclick="refreshMessages()">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Alert Messages -->
+  <?php if (isset($_SESSION['success_message'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="bi bi-check-circle"></i> <?php echo htmlspecialchars($_SESSION['success_message']); unset($_SESSION['success_message']); ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+  
+  <?php if (isset($_SESSION['error_message'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle"></i> <?php echo htmlspecialchars($_SESSION['error_message']); unset($_SESSION['error_message']); ?>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+  <?php endif; ?>
+
+  <div class="row">
+    <div class="col-lg-5 mb-4">
+      <div class="card">
+        <div class="card-header bg-success text-white">
+          <h5 class="card-title mb-0"><i class="bi bi-send"></i> Send New Message</h5>
+        </div>
+        <div class="card-body">
+          <form id="messageForm">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Recipient Faculty</label>
+                <select class="form-select faculty-select" id="recipientEmail" required>
+                  <option value="">Select Faculty Member...</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Message Type</label>
+                <select class="form-select" id="messageType" required>
+                  <option value="general">General</option>
+                  <option value="notification">Notification</option>
+                  <option value="alert">Alert</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Subject</label>
+                <input type="text" class="form-control" id="subject" required placeholder="Enter message subject">
+              </div>
+              <div class="col-12">
+                <label class="form-label">Message</label>
+                <textarea class="form-control" id="message" rows="5" required placeholder="Enter your message here..."></textarea>
+                <div class="form-text">
+                  <span id="charCount">0</span> / 1000 characters
+                </div>
+              </div>
+            </div>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+              <button type="button" class="btn btn-secondary me-md-2" onclick="clearForm()">
+                <i class="bi bi-x"></i> Clear
+              </button>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send"></i> Send Message
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-lg-7 mb-4">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0"><i class="bi bi-inbox"></i> Sent Messages</h5>
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-primary" onclick="filterMessages('all')">All</button>
+            <button type="button" class="btn btn-outline-success" onclick="filterMessages('sent')">Sent</button>
+            <button type="button" class="btn btn-outline-info" onclick="filterMessages('delivered')">Delivered</button>
+            <button type="button" class="btn btn-outline-danger" onclick="filterMessages('failed')">Failed</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="messagesList">
+            <div class="text-center">
+              <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+            </div>
+          </div>
+          <nav id="pagination" class="mt-3"></nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- Edit Message Modal -->
+    <div class="modal fade" id="editMessageModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editMessageForm">
+                        <input type="hidden" id="editMessageId">
+                        <div class="mb-3">
+                            <label for="editRecipient" class="form-label">Recipient</label>
+                            <input type="text" class="form-control" id="editRecipient" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editMessageType" class="form-label">Message Type</label>
+                            <select class="form-select" id="editMessageType" required>
+                                <option value="general">General</option>
+                                <option value="notification">Notification</option>
+                                <option value="alert">Alert</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="editSubject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editMessage" class="form-label">Message</label>
+                            <textarea class="form-control" id="editMessage" rows="5" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateMessage()">Update Message</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Status Modal -->
+    <div class="modal fade" id="deliveryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delivery Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="deliveryStatusContent">
+                    <!-- Content will be loaded dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="admin_messaging.js"></script>
+</body>
+</html>

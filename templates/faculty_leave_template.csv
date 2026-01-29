@@ -1,0 +1,3 @@
+employee_id,name,department,faculty_email,total_leaves,cl,el,ml
+EMP001,Dr. Alice,CSE,alice@university.edu,30,10,10,10
+EMP002,Dr. Bob,ECE,bob@university.edu,25,8,10,7

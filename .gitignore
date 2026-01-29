@@ -1,0 +1,49 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+error.log
+access.log
+
+# Temporary files
+tmp/
+temp/
+cache/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Docker
+.dockerignore
+
+# Composer
+vendor/
+composer.lock
+
+# Node modules (if any)
+node_modules/
+
+# Backup files
+*.bak
+*.backup
+
+# Upload directories (if you want to exclude user uploads)
+uploads/
+
+# Session files
+sessions/
+
+# Firebase credentials (if you have service account files)
+*.json

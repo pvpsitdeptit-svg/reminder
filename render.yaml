@@ -1,0 +1,23 @@
+services:
+  # Web service on Render's free tier
+  - type: web
+    name: reminder-faculty-system
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render
+    autoDeploy: true
+    envVars:
+      - key: APACHE_DOCUMENT_ROOT
+        value: /var/www/html
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_DATABASE_URL
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
