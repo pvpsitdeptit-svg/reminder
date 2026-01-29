@@ -1,10 +1,5 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit();
-}
+require_once 'includes/header.php';
 
 require_once 'config/firebase.php';
 
@@ -48,8 +43,6 @@ try {
 } catch (Exception $e) {
     $error = 'Error loading data: ' . $e->getMessage();
 }
-
-function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 function getBadgeColor($type) {
     $colors = [
@@ -230,55 +223,29 @@ usort($ledgerRows, function($a, $b) {
     return strcmp($b['id'], $a['id']);
 });
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Availed Leaves (Admin)</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-  <script>
-    function updateSessionOptions(leaveType) {
-        var sessionSelect = document.getElementById('sessionSelect');
-        if (leaveType === 'CL' || leaveType === 'CCL') {
-            sessionSelect.innerHTML = '<option value="">Select session</option><option value="FN">FN (Forenoon)</option><option value="AN">AN (Afternoon)</option><option value="FULL">Full Day</option>';
-        } else {
-            sessionSelect.innerHTML = '<option value="FULL">Full Day</option>';
-        }
-    }
-  </script>
-</head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-  <div class="container">
-    <a class="navbar-brand" href="index.php"><i class="bi bi-calendar-check"></i> Faculty Management System</a>
-    <div class="navbar-nav ms-auto">
-      <a class="nav-link text-white" href="manage_faculty_leaves.php"><i class="bi bi-person-lines-fill"></i> Faculty Leaves</a>
-      <a class="nav-link text-white" href="leave_balance_report.php"><i class="bi bi-graph-up"></i> Balance Report</a>
-      <a class="nav-link text-white" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
-    </div>
-  </div>
-</nav>
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-journal-check"></i> Availed Leaves (Admin Entry)
+            </h1>
+            <a href="index.php" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
 
-<div class="container my-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0"><i class="bi bi-journal-check"></i> Availed Leaves (Admin Entry)</h1>
-    <a href="index.php" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
-  </div>
-
-  <?php if (!empty($_SESSION['success_message'])): ?>
+<?php if (!empty($_SESSION['success_message'])): ?>
     <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="bi bi-check-circle"></i> <?php echo h($_SESSION['success_message']); unset($_SESSION['success_message']); ?>
+      <i class="bi bi-check-circle"></i> <?php echo $_SESSION['success_message']; unset($_SESSION['success_message']); ?>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-  <?php endif; ?>
-  <?php if (!empty($_SESSION['error_message'])): ?>
+<?php endif; ?>
+
+<?php if (!empty($_SESSION['error_message'])): ?>
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
       <i class="bi bi-exclamation-triangle"></i> <?php echo $_SESSION['error_message']; unset($_SESSION['error_message']); ?>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-  <?php endif; ?>
+<?php endif; ?>
 
   <div class="row">
     <div class="col-lg-5 mb-4">
@@ -630,10 +597,12 @@ function deleteMessageInline(messageId) {
 }
 
 function getBadgeColor(type) {
-    switch (type) {
-        case 'alert': return 'danger';
-        case 'notification': return 'info';
-        case 'general': return 'secondary';
+    switch(type.toLowerCase()) {
+        case 'general': return 'primary';
+        case 'urgent': return 'danger';
+        case 'info': return 'info';
+        case 'success': return 'success';
+        case 'warning': return 'warning';
         default: return 'secondary';
     }
 }
@@ -646,35 +615,20 @@ function getStatusBadgeColor(status) {
         default: return 'secondary';
     }
 }
-</script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
 // Function to update session options based on leave type
 function updateSessionOptions(leaveType) {
-    alert('Function called with: ' + leaveType); // Test alert
     var sessionSelect = document.getElementById('sessionSelect');
-    var daysField = document.getElementById('daysField');
-    var daysInput = daysField.querySelector('input[name="days"]');
-    
-    if (leaveType === 'CL') {
-        // For CL, allow half-day sessions
+    if (leaveType === 'CL' || leaveType === 'CCL') {
         sessionSelect.innerHTML = '<option value="">Select session</option><option value="FN">FN (Forenoon)</option><option value="AN">AN (Afternoon)</option><option value="FULL">Full Day</option>';
-        sessionSelect.value = '';
-        daysField.style.display = 'none';
-        daysInput.removeAttribute('required');
     } else {
-        // For other leave types, only allow full day
         sessionSelect.innerHTML = '<option value="FULL">Full Day</option>';
-        sessionSelect.value = 'FULL';
-        daysInput.value = '1';
-        daysField.style.display = 'none';
-        daysInput.removeAttribute('required');
     }
 }
 
-// Handle session change for CL
-document.getElementById('sessionSelect').addEventListener('change', function() {
+// Date range functionality
+document.addEventListener('DOMContentLoaded', function() {
+    var fromDate = document.querySelector('input[name="from_date"]');
     var daysField = document.getElementById('daysField');
     var daysInput = daysField.querySelector('input[name="days"]');
     var leaveType = document.querySelector('select[name="leave_type"]').value;

@@ -1,10 +1,5 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit();
-}
+require_once 'includes/header.php';
 
 require_once 'config/firebase.php';
 
@@ -26,8 +21,6 @@ try {
 } catch (Exception $e) {
     $error = 'Error loading data: ' . $e->getMessage();
 }
-
-function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 $filterDept  = isset($_GET['department']) ? trim($_GET['department']) : '';
 $filterEmail = isset($_GET['email']) ? strtolower(trim($_GET['email'])) : '';
@@ -139,25 +132,7 @@ body { background:#f4f6f9; }
 
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-<div class="container">
-<a class="navbar-brand" href="index.php">
-<i class="bi bi-calendar-check"></i> Faculty Management System
-</a>
-<div class="navbar-nav ms-auto">
-<a class="nav-link text-white" href="manage_faculty_leaves.php">Leaves</a>
-<a class="nav-link text-white" href="manage_leave_availed.php">Availed</a>
-<a class="nav-link text-white" href="logout.php">Logout</a>
-</div>
-</div>
-</nav>
-
 <div class="container my-4">
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-<h3><i class="bi bi-graph-up"></i> Leave Balance Report</h3>
-<a href="index.php" class="btn btn-secondary btn-sm">Back</a>
-</div>
 
 <div class="card shadow-soft mb-3">
 <div class="card-body">
@@ -278,7 +253,6 @@ echo '<script>window.leaveHistoryData' . str_replace(['@', '.'], ['_', '_'], $r[
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 function showLeaveHistory(email) {
     // Get leave history data from global variable
@@ -345,5 +319,4 @@ function showLeaveHistory(email) {
     };
 }
 </script>
-</body>
-</html>
+<?php require_once 'includes/footer.php'; ?>

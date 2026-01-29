@@ -1,10 +1,5 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit();
-}
+require_once 'includes/header.php';
 
 require_once 'config/firebase.php';
 
@@ -25,8 +20,6 @@ try {
 $editEmail = isset($_GET['email']) ? trim((string)$_GET['email']) : '';
 $editKey = $editEmail ? firebaseKeyFromEmail($editEmail) : '';
 $editItem = ($editKey && isset($items[$editKey])) ? $items[$editKey] : null;
-
-function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -56,29 +49,15 @@ function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 
 <body class="bg-light">
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-<div class="container">
-<a class="navbar-brand" href="index.php">
-<i class="bi bi-calendar-check"></i> Faculty Management System
-</a>
-<div class="navbar-nav ms-auto">
-<a class="nav-link text-white" href="manage_lectures.php"><i class="bi bi-book"></i> Manage Lectures</a>
-<a class="nav-link text-white" href="manage_invigilation.php"><i class="bi bi-clipboard-check"></i> Manage Invigilation</a>
-<a class="nav-link text-white" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
-</div>
-</div>
-</nav>
-
-<div class="container my-4">
+    <div class="container my-4">
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-<h3 class="mb-0">
-<i class="bi bi-person-lines-fill"></i> Manage Faculty Leave Master
-</h3>
-<a href="manage_faculty_leaves.php" class="btn btn-outline-secondary btn-sm">
-<i class="bi bi-x-circle"></i> Clear Form
-</a>
+    <h3 class="mb-0">
+        <i class="bi bi-person-lines-fill"></i> Manage Faculty Leave Master
+    </h3>
+    <a href="manage_faculty_leaves.php" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-x-circle"></i> Clear Form
+    </a>
 </div>
 
 <?php if (!empty($_SESSION['success_message'])): ?>
@@ -253,6 +232,4 @@ $displayEmail = $decodedEmail !== '' ? $decodedEmail : $key;
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once 'includes/footer.php'; ?>

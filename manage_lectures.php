@@ -1,10 +1,5 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit();
-}
+require_once 'includes/header.php';
 
 require_once 'config/firebase.php';
 
@@ -24,49 +19,15 @@ try {
 
 $editId = isset($_GET['id']) ? trim($_GET['id']) : '';
 $editItem = ($editId && isset($templates[$editId])) ? $templates[$editId] : null;
-
-function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manage Lecture Templates</title>
+    <div class="container my-4">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-
-<style>
-body { background:#f4f6f9; }
-.card { border:none; border-radius:12px; }
-.shadow-soft { box-shadow:0 10px 25px rgba(0,0,0,.08); }
-.table thead th { background:#f1f3f5; font-weight:600; }
-</style>
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-<div class="container">
-<a class="navbar-brand" href="index.php">
-<i class="bi bi-calendar-check"></i> Faculty Management System
-</a>
-<div class="navbar-nav ms-auto">
-<a class="nav-link text-white" href="manage_invigilation.php"><i class="bi bi-clipboard-check"></i> Invigilation</a>
-<a class="nav-link text-white" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
-</div>
-</div>
-</nav>
-
-<div class="container my-4">
-
-<!-- HEADER -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-<h3 class="mb-0"><i class="bi bi-book"></i> Manage Lecture Templates</h3>
-<a href="manage_lectures.php" class="btn btn-outline-secondary btn-sm">
-<i class="bi bi-x-circle"></i> Clear Form
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h1 class="h3 mb-0">
+<i class="bi bi-journal-text"></i> Manage Lecture Templates
+</h1>
+<a href="index.php" class="btn btn-secondary">
+<i class="bi bi-arrow-left"></i> Back to Dashboard
 </a>
 </div>
 
@@ -233,6 +194,4 @@ onclick="return confirm('Delete this template?');">
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once 'includes/footer.php'; ?>

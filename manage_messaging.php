@@ -1,16 +1,9 @@
 <?php
-session_start();
-
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit();
-}
+require_once 'includes/header.php';
 
 require_once 'config/firebase.php';
 
 /* ---------------- HELPERS ---------------- */
-function h($v) { return htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8'); }
-
 function getBadgeColor($type) {
     return match ($type) {
         'alert' => 'danger',
@@ -99,48 +92,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Faculty Messaging</title>
+    <div class="container my-4">
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-
-<style>
-body { background:#f4f6f9; }
-.card { border:none; border-radius:12px; }
-.shadow-soft { box-shadow:0 10px 25px rgba(0,0,0,.08); }
-.table thead th { background:#f1f3f5; font-weight:600; }
-</style>
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-<div class="container">
-<a class="navbar-brand" href="index.php">
-<i class="bi bi-calendar-check"></i> Faculty Management System
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h1 class="h3 mb-0">
+<i class="bi bi-chat-dots"></i> Faculty Messaging
+</h1>
+<a href="index.php" class="btn btn-secondary">
+<i class="bi bi-arrow-left"></i> Back to Dashboard
 </a>
-
-<div class="navbar-nav ms-auto">
-<a class="nav-link text-white" href="manage_lectures.php"><i class="bi bi-book"></i> Lectures</a>
-<a class="nav-link text-white" href="manage_invigilation.php"><i class="bi bi-clipboard-check"></i> Invigilation</a>
-<a class="nav-link text-white" href="manage_faculty_leaves.php"><i class="bi bi-person-lines-fill"></i> Leaves</a>
-<a class="nav-link text-white" href="leave_balance_report.php"><i class="bi bi-graph-up"></i> Balance</a>
-<a class="nav-link text-white active" href="#"><i class="bi bi-chat-dots"></i> Messaging</a>
-<a class="nav-link text-white" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
-</div>
-</div>
-</nav>
-
-<div class="container my-4">
-
-<!-- HEADER -->
-<div class="d-flex justify-content-between align-items-center mb-3">
-<h3 class="mb-0"><i class="bi bi-chat-dots"></i> Faculty Messaging</h3>
 </div>
 
 <?php if (!empty($_SESSION['success_message'])): ?>
@@ -310,6 +270,4 @@ function deleteMessage(id) {
 }
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once 'includes/footer.php'; ?>

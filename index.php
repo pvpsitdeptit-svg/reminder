@@ -1,11 +1,5 @@
 <?php
-session_start();
-
-// Check if user is logged in
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit();
-}
+require_once 'includes/header.php';
 
 require_once 'config/firebase.php';
 
@@ -55,60 +49,20 @@ try {
     $error = $e->getMessage();
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard | Faculty Management</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-
-<style>
-body { background:#f4f6f9; }
-.card { border: none; border-radius: 12px; }
-.shadow-soft { box-shadow: 0 10px 25px rgba(0,0,0,.08); }
-.stat-card { color:#fff; }
-.stat-1 { background: linear-gradient(135deg,#667eea,#764ba2); }
-.stat-2 { background: linear-gradient(135deg,#43cea2,#185a9d); }
-.stat-3 { background: linear-gradient(135deg,#ff9966,#ff5e62); }
-.upload-area {
-    border:2px dashed #ced4da;
-    border-radius:12px;
-    padding:24px;
-    text-align:center;
-    transition:.3s;
-}
-.upload-area:hover { background:#f8f9fa; border-color:#0d6efd; }
-.table thead th { background:#f1f3f5; font-weight:600; }
-</style>
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-<div class="container">
-<a class="navbar-brand" href="index.php"><i class="bi bi-calendar-check"></i> Faculty Management</a>
-<div class="navbar-nav ms-auto">
-<a class="nav-link text-white" href="manage_lectures.php"><i class="bi bi-book"></i> Lectures</a>
-<a class="nav-link text-white" href="manage_invigilation.php"><i class="bi bi-clipboard-check"></i> Invigilation</a>
-<a class="nav-link text-white" href="manage_faculty_leaves.php"><i class="bi bi-person-lines-fill"></i> Leaves</a>
-<a class="nav-link text-white" href="templates.php"><i class="bi bi-file-earmark-csv"></i> Templates</a>
-<a class="nav-link text-white" href="leave_balance_report.php"><i class="bi bi-graph-up"></i> Balance</a>
-<a class="nav-link text-white" href="manage_messaging.php"><i class="bi bi-chat-dots"></i> Messaging</a>
-<a class="nav-link text-white" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a>
-</div>
-</div>
-</nav>
 
 <div class="container my-4">
 
-<!-- HEADER -->
-<div class="mb-4">
-<h2 class="fw-bold">Admin Dashboard</h2>
-<p class="text-muted">Overview of lectures, invigilation & faculty activity</p>
+<!-- Dashboard Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 fw-bold mb-1">Admin Dashboard</h1>
+        <p class="text-muted">Overview of lectures, invigilation & faculty activity</p>
+    </div>
+    <div class="text-end">
+        <span class="badge bg-primary px-3 py-2">
+            <i class="bi bi-calendar-check"></i> <?php echo date('F j, Y'); ?>
+        </span>
+    </div>
 </div>
 
 <!-- STATS -->
@@ -244,6 +198,4 @@ foreach ($uploads as $u):
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once 'includes/footer.php'; ?>

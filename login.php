@@ -1,28 +1,7 @@
 <?php
-session_start();
-
-// Check if user is already logged in
-if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
-    header('Location: index.php');
-    exit();
-}
-
-// Handle login
-$error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-    
-    // Simple authentication (in production, use proper password hashing)
-    if ($username === 'admin' && $password === 'admin123') {
-        $_SESSION['admin_logged_in'] = true;
-        $_SESSION['username'] = $username;
-        header('Location: index.php');
-        exit();
-    } else {
-        $error = 'Invalid username or password';
-    }
-}
+// Redirect to Firebase login
+header('Location: firebase_login.php');
+exit();
 ?>
 
 <!DOCTYPE html>
@@ -95,12 +74,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <i class="bi bi-box-arrow-in-right"></i> Login
                             </button>
                         </form>
-                        
-                        <div class="mt-3 text-center">
-                            <small class="text-muted">
-                                Default: admin / admin123
-                            </small>
-                        </div>
                     </div>
                 </div>
                 
