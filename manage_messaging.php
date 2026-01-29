@@ -1,7 +1,49 @@
 <?php
-require_once 'includes/header.php';
-
 require_once 'config/firebase.php';
+
+/* ---------------- FORM ACTIONS ---------------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    if ($action === 'send_message') {
+        $ref = $database->getReference('admin_messages')->push([
+            'sender_email' => $_SESSION['admin_email'] ?? 'admin@system.com',
+            'recipient_email' => $_POST['recipient_email'],
+            'subject' => $_POST['subject'],
+            'message' => $_POST['message'],
+            'message_type' => $_POST['message_type'],
+            'delivery_status' => 'sent',
+            'created_at' => time(),
+            'updated_at' => time()
+        ]);
+
+        $_SESSION['success_message'] = 'Message sent successfully';
+        header('Location: manage_messaging.php');
+        exit;
+    }
+
+    if ($action === 'edit_message') {
+        $database->getReference('admin_messages/' . $_POST['message_id'])->update([
+            'subject' => $_POST['subject'],
+            'message' => $_POST['message'],
+            'message_type' => $_POST['message_type'],
+            'updated_at' => time()
+        ]);
+
+        $_SESSION['success_message'] = 'Message updated successfully';
+        header('Location: manage_messaging.php');
+        exit;
+    }
+
+    if ($action === 'delete_message') {
+        $database->getReference('admin_messages/' . $_POST['message_id'])->remove();
+        $_SESSION['success_message'] = 'Message deleted successfully';
+        header('Location: manage_messaging.php');
+        exit;
+    }
+}
+
+require_once 'includes/header.php';
 
 /* ---------------- HELPERS ---------------- */
 function getBadgeColor($type) {
@@ -49,47 +91,6 @@ try {
     }
 } catch (Exception $e) {
     $_SESSION['error_message'] = $e->getMessage();
-}
-
-/* ---------------- FORM ACTIONS ---------------- */
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-
-    if ($action === 'send_message') {
-        $ref = $database->getReference('admin_messages')->push([
-            'sender_email' => $_SESSION['admin_email'] ?? 'admin@system.com',
-            'recipient_email' => $_POST['recipient_email'],
-            'subject' => $_POST['subject'],
-            'message' => $_POST['message'],
-            'message_type' => $_POST['message_type'],
-            'delivery_status' => 'sent',
-            'created_at' => time(),
-            'updated_at' => time()
-        ]);
-
-        $_SESSION['success_message'] = 'Message sent successfully';
-        header('Location: manage_messaging.php');
-        exit;
-    }
-
-    if ($action === 'edit_message') {
-        $database->getReference('admin_messages/' . $_POST['message_id'])->update([
-            'subject' => $_POST['subject'],
-            'message' => $_POST['message'],
-            'message_type' => $_POST['message_type'],
-            'updated_at' => time()
-        ]);
-        $_SESSION['success_message'] = 'Message updated';
-        header('Location: manage_messaging.php');
-        exit;
-    }
-
-    if ($action === 'delete_message') {
-        $database->getReference('admin_messages/' . $_POST['message_id'])->remove();
-        $_SESSION['success_message'] = 'Message deleted';
-        header('Location: manage_messaging.php');
-        exit;
-    }
 }
 ?>
     <div class="container my-4">
