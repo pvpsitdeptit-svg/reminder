@@ -181,24 +181,34 @@ class SimpleFirebaseReference {
         }
     }
     
+    public function getKey() {
+        // Extract the key from the path (last part after '/')
+        $parts = explode('/', $this->path);
+        return end($parts);
+    }
+    
     public function push($value) {
-        // For simplicity, just return a mock key
-        return uniqid();
+        // Generate a unique key
+        $key = uniqid();
+        $newPath = $this->path . '/' . $key;
+        
+        // Save the data to Firebase
+        $this->database->setValue($newPath, $value);
+        
+        // Return a reference to the new location
+        return new SimpleFirebaseReference($this->database, $newPath);
     }
     
     public function set($value) {
-        // Mock implementation
-        return true;
+        return $this->database->setValue($this->path, $value);
     }
     
     public function update($value) {
-        // Mock implementation
-        return true;
+        return $this->database->setValue($this->path, $value);
     }
     
     public function remove() {
-        // Mock implementation
-        return true;
+        return $this->database->setValue($this->path, null);
     }
 }
 
