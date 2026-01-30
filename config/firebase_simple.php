@@ -161,6 +161,42 @@ class SimpleFirebaseDatabase {
         
         return json_decode($response, true);
     }
+    
+    public function setValue($path, $value) {
+        $url = $this->databaseUrl;
+        if ($path) {
+            $url .= '/' . ltrim($path, '/');
+        }
+        
+        $accessToken = $this->getAccessToken();
+        if (!$accessToken) {
+            throw new Exception('Could not get access token');
+        }
+        
+        // Use correct Firebase REST API format
+        $apiUrl = $url . '.json?access_token=' . $accessToken;
+        
+        $data = json_encode($value);
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $apiUrl);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200) {
+            throw new Exception("HTTP Error: $httpCode - $response");
+        }
+        
+        return json_decode($response, true);
+    }
 }
 
 class SimpleFirebaseReference {
