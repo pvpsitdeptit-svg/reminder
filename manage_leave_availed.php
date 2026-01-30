@@ -89,8 +89,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     error_log("Notification data: " . json_encode($notificationData));
                     
                     // Initialize Firebase Messaging
-                    $messaging = $factory->createMessaging();
-                    error_log("Firebase Messaging initialized");
+                    if (isset($factory) && $factory) {
+                        // SDK is available
+                        $messaging = $factory->createMessaging();
+                        error_log("Firebase Messaging initialized via SDK");
+                    } else {
+                        // Simple implementation - pass null to sendFCMNotification
+                        // The sendFCMNotification function will handle the simple implementation
+                        $messaging = null;
+                        error_log("Firebase Messaging using simple implementation");
+                    }
                     
                     // Send FCM notification
                     error_log("Attempting to send FCM notification...");
