@@ -1,7 +1,87 @@
 <?php
-require_once 'includes/header.php';
-
 require_once 'config/firebase.php';
+
+// Form processing logic - must be before header to avoid headers already sent
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    
+    if ($action === 'save_template') {
+        try {
+            $template_id = $_POST['template_id'] ?? '';
+            $subject = $_POST['subject'] ?? '';
+            $topic = $_POST['topic'] ?? '';
+            $department = $_POST['department'] ?? '';
+            $semester = $_POST['semester'] ?? '';
+            $section = $_POST['section'] ?? '';
+            $faculty = $_POST['faculty'] ?? '';
+            $date = $_POST['date'] ?? '';
+            $time = $_POST['time'] ?? '';
+            $duration = $_POST['duration'] ?? '';
+            $classroom = $_POST['classroom'] ?? '';
+            $notes = $_POST['notes'] ?? '';
+            
+            // Validate required fields
+            if (empty($subject) || empty($topic) || empty($department) || empty($semester) || empty($section) || empty($faculty) || empty($date) || empty($time)) {
+                $_SESSION['error_message'] = 'Please fill all required fields';
+                header('Location: manage_lectures.php');
+                exit;
+            }
+            
+            // Prepare data for Firebase
+            $templateData = [
+                'subject' => $subject,
+                'topic' => $topic,
+                'department' => $department,
+                'semester' => $semester,
+                'section' => $section,
+                'faculty' => $faculty,
+                'date' => $date,
+                'time' => $time,
+                'duration' => $duration,
+                'classroom' => $classroom,
+                'notes' => $notes,
+                'created_at' => time(),
+                'updated_at' => time()
+            ];
+            
+            if ($template_id) {
+                // Update existing template
+                $database->getReference('lecture_templates/' . $template_id)->update($templateData);
+                $_SESSION['success_message'] = 'Lecture template updated successfully';
+            } else {
+                // Create new template
+                $database->getReference('lecture_templates')->push($templateData);
+                $_SESSION['success_message'] = 'Lecture template created successfully';
+            }
+            
+            header('Location: manage_lectures.php');
+            exit;
+            
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = 'Error saving lecture template: ' . $e->getMessage();
+            header('Location: manage_lectures.php');
+            exit;
+        }
+    }
+    
+    if ($action === 'delete_template') {
+        try {
+            $template_id = $_POST['template_id'] ?? '';
+            $database->getReference('lecture_templates/' . $template_id)->remove();
+            
+            $_SESSION['success_message'] = 'Lecture template deleted successfully';
+            header('Location: manage_lectures.php');
+            exit;
+            
+        } catch (Exception $e) {
+            $_SESSION['error_message'] = 'Error deleting lecture template: ' . $e->getMessage();
+            header('Location: manage_lectures.php');
+            exit;
+        }
+    }
+}
+
+require_once 'includes/header.php';
 
 $templates = [];
 try {

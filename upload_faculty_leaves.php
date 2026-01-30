@@ -1,8 +1,12 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
+// Use the same authentication check as other pages
+require_once 'firebase_auth.php';
+
+if (!isAuthenticated()) {
+    $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
+    header('Location: firebase_login.php');
     exit();
 }
 

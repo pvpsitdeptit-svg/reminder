@@ -584,10 +584,19 @@ function sendFCMNotification($messaging, $title, $body, $data = [], $tokens = []
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
             curl_close($ch);
+            
+            // Log detailed error information
+            error_log("FCM Response: " . $response);
+            error_log("FCM HTTP Code: " . $httpCode);
+            error_log("FCM Curl Error: " . $curlError);
+            error_log("FCM Token: " . substr($token, 0, 20) . "...");
             
             if ($httpCode == 200) {
                 $successCount++;
+            } else {
+                error_log("FCM Failed for token: " . $token . " HTTP Code: " . $httpCode . " Response: " . $response);
             }
         }
 
