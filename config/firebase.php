@@ -71,12 +71,15 @@ DonICKNWoLnnuMpBXXoU+w==
 // Force Mock Mode (set to true to use in-memory mock DB even if Firebase is configured)
 $FORCE_MOCK_MODE = false;
 
+// Force simple implementation to avoid SDK connectivity issues
+$FORCE_SIMPLE_MODE = true;
+
 try {
     // Check if we're in production environment (Render) and force simple implementation
     $isProduction = ($_ENV['APP_ENV'] ?? 'development') === 'production';
     
-    if ($isProduction) {
-        // Force simple implementation for production to avoid SDK dependency issues
+    if ($isProduction || $FORCE_SIMPLE_MODE) {
+        // Force simple implementation for production or when forced
         require_once __DIR__ . '/firebase_simple.php';
     } else {
         // Development: try SDK first with fallback
@@ -223,11 +226,12 @@ function validateCSVData($data, $type) {
                 }
             }
             
-            // Validate date format
+            // Validate date format (accept Y-m-d, d/m/Y, and DD-MM-YYYY)
             if (isset($row['date']) && !empty($row['date'])) {
                 if (!DateTime::createFromFormat('Y-m-d', $row['date']) && 
-                    !DateTime::createFromFormat('d/m/Y', $row['date'])) {
-                    $errors[] = "Row " . ($row_index + 2) . ": Invalid date format. Use Y-m-d or d/m/Y";
+                    !DateTime::createFromFormat('d/m/Y', $row['date']) &&
+                    !DateTime::createFromFormat('d-m-Y', $row['date'])) {
+                    $errors[] = "Row " . ($row_index + 2) . ": Invalid date format. Use Y-m-d, d/m/Y, or DD-MM-YYYY";
                 }
             }
             
@@ -297,10 +301,10 @@ function validateCSVData($data, $type) {
                 }
             }
 
-            // Validate time format
+            // Validate time format (accept both HH:MM and HH:MM-HH:MM)
             if (isset($row['time']) && $row['time'] !== '') {
-                if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $row['time'])) {
-                    $errors[] = "Row " . ($row_index + 2) . ": Invalid time format. Use HH:MM";
+                if (!preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9](-([01]?[0-9]|2[0-3]):[0-5][0-9])?$/', $row['time'])) {
+                    $errors[] = "Row " . ($row_index + 2) . ": Invalid time format. Use HH:MM or HH:MM-HH:MM";
                 }
             }
 
@@ -322,11 +326,12 @@ function validateCSVData($data, $type) {
                 }
             }
             
-            // Validate date format
+            // Validate date format (accept Y-m-d, d/m/Y, and DD-MM-YYYY)
             if (isset($row['date']) && !empty($row['date'])) {
                 if (!DateTime::createFromFormat('Y-m-d', $row['date']) && 
-                    !DateTime::createFromFormat('d/m/Y', $row['date'])) {
-                    $errors[] = "Row " . ($row_index + 2) . ": Invalid date format. Use Y-m-d or d/m/Y";
+                    !DateTime::createFromFormat('d/m/Y', $row['date']) &&
+                    !DateTime::createFromFormat('d-m-Y', $row['date'])) {
+                    $errors[] = "Row " . ($row_index + 2) . ": Invalid date format. Use Y-m-d, d/m/Y, or DD-MM-YYYY";
                 }
             }
             

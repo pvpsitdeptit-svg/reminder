@@ -1,0 +1,4 @@
+day,time,name,faculty_id,faculty_email,subject,room
+monday,09:00-10:00,John Smith,FAC001,john.smith@college.com,Mathematics,Room101
+tuesday,10:00-11:00,Jane Doe,FAC002,jane.doe@college.com,Physics,Room202
+wednesday,14:00-15:00,Bob Johnson,FAC003,bob.johnson@college.com,Chemistry,Lab1

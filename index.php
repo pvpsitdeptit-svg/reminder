@@ -122,7 +122,7 @@ foreach ($uploads as $u):
 <div class="upload-area mb-3">
 <i class="bi bi-file-earmark-csv fs-1 text-muted"></i>
 <p class="mb-2">Upload CSV File</p>
-<input type="file" class="form-control" name="<?= $u[0] === 'Faculty Leave Master' ? 'faculty_leaves_csv' : 'csv_file'; ?>" required>
+<input type="file" class="form-control" name="<?= $u[0] === 'Faculty Leave Master' ? 'faculty_leaves_csv' : ($u[0] === 'Invigilation Duty' ? 'invigilation_csv' : 'lecture_csv'); ?>" required>
 </div>
 <button class="btn btn-<?= $u[2]; ?> w-100">
 <i class="bi bi-cloud-upload"></i> Upload
