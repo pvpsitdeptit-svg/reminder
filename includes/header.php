@@ -109,6 +109,9 @@ $userDisplayName = $currentUser['displayName'] ?? $userEmail;
             border-bottom: none;
         }
     </style>
+    
+    <!-- External JavaScript for AI interactions -->
+    <script src="assets/js/ai-optimization.js"></script>
 </head>
 
 <body>
@@ -127,11 +130,13 @@ $userDisplayName = $currentUser['displayName'] ?? $userEmail;
                 <ul class="navbar-nav me-auto">
                     <!-- Dashboard -->
                     <li class="nav-item">
-                        <a class="nav-link text-white <?php echo basename($_SERVER['PHP_SELF']) === 'index.php' ? 'active' : ''; ?>" href="index.php">
+                        <a class="nav-link text-white <?php echo (basename($_SERVER['PHP_SELF']) === 'index.php' || basename($_SERVER['PHP_SELF']) === 'faculty_dashboard.php') ? 'active' : ''; ?>" href="<?php echo isAdmin() ? 'index.php' : 'faculty_dashboard.php'; ?>">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
                     
+                    <!-- Admin-only menus -->
+                    <?php if (isAdmin()): ?>
                     <!-- Faculty Management -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -143,6 +148,9 @@ $userDisplayName = $currentUser['displayName'] ?? $userEmail;
                             </a></li>
                             <li><a class="dropdown-item" href="manage_leave_availed.php">
                                 <i class="bi bi-journal-check"></i> Leave Management
+                            </a></li>
+                            <li><a class="dropdown-item" href="manage_leave_requests.php">
+                                <i class="bi bi-clipboard-check"></i> Leave Requests
                             </a></li>
                         </ul>
                     </li>
@@ -168,8 +176,11 @@ $userDisplayName = $currentUser['displayName'] ?? $userEmail;
                             <i class="bi bi-graph-up"></i> Reports
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="leave_balance_report.php">
-                                <i class="bi bi-pie-chart"></i> Balance Report
+                            <li><a class="dropdown-item" href="reports.php">
+                                <i class="bi bi-file-earmark-bar-graph"></i> Generate Reports
+                            </a></li>
+                            <li><a class="dropdown-item" href="analytics.php">
+                                <i class="bi bi-graph-up-arrow"></i> Analytics
                             </a></li>
                         </ul>
                     </li>
@@ -183,10 +194,46 @@ $userDisplayName = $currentUser['displayName'] ?? $userEmail;
                     
                     <!-- Messaging -->
                     <li class="nav-item">
-                        <a class="nav-link text-white <?php echo basename($_SERVER['PHP_SELF']) === 'manage_messaging.php' ? 'active' : ''; ?>" href="manage_messaging.php">
+                        <a class="nav-link text-white" href="messaging.php">
                             <i class="bi bi-chat-dots"></i> Messaging
                         </a>
                     </li>
+                    <?php endif; ?>
+                    
+                    <!-- Faculty-only menus -->
+                    <?php if (!isAdmin()): ?>
+                    <!-- My Schedule -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="bi bi-calendar-week"></i> My Schedule
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="view_lectures.php">
+                                <i class="bi bi-chalkboard"></i> My Lectures
+                            </a></li>
+                            <li><a class="dropdown-item" href="view_invigilation.php">
+                                <i class="bi bi-clipboard-check"></i> My Invigilation
+                            </a></li>
+                            <li><a class="dropdown-item" href="view_leaves.php">
+                                <i class="bi bi-calendar-x"></i> My Leave History
+                            </a></li>
+                        </ul>
+                    </li>
+                    
+                    <!-- Leave Management -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="leave_request.php">
+                            <i class="bi bi-calendar-plus"></i> Request Leave
+                        </a>
+                    </li>
+                    
+                    <!-- Profile -->
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="profile.php">
+                            <i class="bi bi-person"></i> My Profile
+                        </a>
+                    </li>
+                    <?php endif; ?>
                 </ul>
                 
                 <!-- User Menu -->

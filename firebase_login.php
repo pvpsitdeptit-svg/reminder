@@ -31,8 +31,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             error_log("Firebase login successful for: " . $email);
             
-            // Redirect to intended page or dashboard
-            $redirect_url = $_SESSION['redirect_url'] ?? 'index.php';
+            // Redirect based on user role
+            if ($email === 'admin@gmail.com') {
+                $redirect_url = $_SESSION['redirect_url'] ?? 'index.php'; // Admin dashboard
+            } else {
+                $redirect_url = $_SESSION['redirect_url'] ?? 'faculty_dashboard.php'; // Faculty dashboard
+            }
             unset($_SESSION['redirect_url']);
             header('Location: ' . $redirect_url);
             exit();

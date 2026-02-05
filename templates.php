@@ -1,26 +1,22 @@
 <?php
+require_once 'config/firebase.php';
+require_once 'firebase_auth.php';
+
+// Require admin role for this page
+requireAdmin();
+
 require_once 'includes/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSV Templates - FMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-</head>
-<body class="bg-light">
-    <div class="container mt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0">
-                <i class="bi bi-file-earmark-text"></i> CSV Templates
-            </h1>
-            <a href="index.php" class="btn btn-secondary btn-sm">
-                <i class="bi bi-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+            <i class="bi bi-file-earmark-text"></i> CSV Templates
+        </h1>
+        <a href="index.php" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
 
         <div class="row">
             <!-- Lecture Template -->
@@ -246,5 +242,6 @@ require_once 'includes/header.php';
             </div>
         </div>
     </div>
+</div>
 
 <?php require_once 'includes/footer.php'; ?>

@@ -2,6 +2,20 @@
 session_start();
 require_once 'config/firebase.php';
 
+// Helper function for leave type colors
+function getLeaveTypeColor($leaveType) {
+    switch($leaveType) {
+        case 'CL': return 'primary';      // Casual Leave - Blue
+        case 'EL': return 'success';      // Earned Leave - Green
+        case 'ML': return 'danger';       // Medical Leave - Red
+        case 'HPL': return 'warning';     // Half-pay Leave - Yellow
+        case 'OD': return 'info';         // On Duty - Light Blue
+        case 'CCL': return 'secondary';   // Child Care Leave - Gray
+        case 'LOP': return 'dark';        // Loss of Pay - Dark
+        default: return 'secondary';
+    }
+}
+
 // Form processing logic - must be before header to avoid headers already sent
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     error_log("POST request received. Action: " . ($_POST['action'] ?? 'none'));
@@ -26,22 +40,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 exit;
             }
             
-            // Prepare data for Firebase
-            $leaveData = [
-                'faculty_email' => $faculty_email,
-                'leave_type' => $leave_type,
-                'session' => $session,
-                'date' => $from_date,
-                'to_date' => $to_date,
-                'days' => (float)$days,
-                'reason' => $reason,
-                'created_at' => time(),
-                'updated_at' => time()
-            ];
+            // Validate date range
+            $start = new DateTime($from_date);
+            $end = new DateTime($to_date);
             
-            // Save to Firebase
-            $newLeaveRef = $database->getReference('leave_ledger')->push($leaveData);
-            $leaveId = $newLeaveRef->getKey();
+            if ($end < $start) {
+                $_SESSION['error_message'] = 'To date cannot be before From date';
+                header('Location: manage_leave_availed.php');
+                exit;
+            }
+            
+            // Create entries for each day in the range
+            $entriesCreated = 0;
+            $currentDate = clone $start;
+            
+            while ($currentDate <= $end) {
+                $dayOfWeek = $currentDate->format('N'); // 1 = Monday, 7 = Sunday
+                
+                // Skip weekends (Saturday=6, Sunday=7) unless it's OD (On Duty)
+                if ($dayOfWeek < 6 || $leave_type === 'OD') {
+                    // Calculate days for this specific date
+                    $daysForThisEntry = ($session === 'FULL') ? 1 : 0.5;
+                    
+                    // Prepare data for Firebase
+                    $leaveData = [
+                        'faculty_email' => $faculty_email,
+                        'leave_type' => $leave_type,
+                        'session' => $session,
+                        'date' => $currentDate->format('Y-m-d'),
+                        'to_date' => $currentDate->format('Y-m-d'), // Same as date for individual entries
+                        'days' => $daysForThisEntry,
+                        'reason' => $reason,
+                        'created_at' => time(),
+                        'updated_at' => time(),
+                        'date_range_start' => $from_date, // Track original range
+                        'date_range_end' => $to_date
+                    ];
+                    
+                    // Save to Firebase
+                    $newLeaveRef = $database->getReference('leave_ledger')->push($leaveData);
+                    $leaveId = $newLeaveRef->getKey();
+                    $entriesCreated++;
+                }
+                
+                $currentDate->add(new DateInterval('P1D'));
+            }
+            
+            if ($entriesCreated === 0) {
+                $_SESSION['error_message'] = 'No working days found in the selected date range';
+                header('Location: manage_leave_availed.php');
+                exit;
+            }
             
             // Send FCM notification to faculty about leave entry
             $fcmStatus = 'not_sent';
@@ -137,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
             $database->getReference('fcm_delivery_log')->push($fcmLog);
             
-            $_SESSION['success_message'] = 'Leave entry added successfully' . ($fcmStatus === 'sent' ? ' with notification sent!' : '');
+            $_SESSION['success_message'] = "Leave entry added successfully! Created {$entriesCreated} " . ($entriesCreated === 1 ? 'entry' : 'entries') . " for the date range." . ($fcmStatus === 'sent' ? ' Notification sent!' : '');
             header('Location: manage_leave_availed.php');
             exit;
             
@@ -503,14 +552,30 @@ usort($ledgerRows, function($a, $b) {
                 <label class="form-label">Date Range</label>
                 <div class="row g-2">
                   <div class="col-6">
-                    <input type="date" name="from_date" class="form-control" required>
+                    <input type="date" name="from_date" class="form-control" required id="fromDate" onchange="calculateDays()">
                     <small class="text-muted">From</small>
                   </div>
                   <div class="col-6">
-                    <input type="date" name="to_date" class="form-control" id="toDate">
+                    <input type="date" name="to_date" class="form-control" id="toDate" onchange="calculateDays()">
                     <small class="text-muted">To (optional, defaults to From)</small>
                   </div>
                 </div>
+                <div class="mt-2">
+                  <small class="text-info">
+                    <i class="bi bi-info-circle"></i> 
+                    <span id="dateInfo">Select dates to automatically calculate leave days</span>
+                  </small>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Calculated Days</label>
+                <div class="input-group">
+                  <input type="number" min="0.5" step="0.5" name="days" class="form-control" id="calculatedDays" value="1" readonly>
+                  <button class="btn btn-outline-secondary" type="button" onclick="manualDays()" title="Edit manually">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                </div>
+                <small class="text-muted">Automatically calculated based on date range and session</small>
               </div>
               <div class="col-12">
                 <label class="form-label">Reason (optional)</label>
@@ -559,11 +624,45 @@ usort($ledgerRows, function($a, $b) {
                   foreach ($displayRows as $item): $r = $item['row']; 
                 ?>
                   <tr>
-                    <td style="min-width: 100px; white-space: nowrap;"><?php echo h($r['date'] ?? ''); ?></td>
+                    <td style="min-width: 100px; white-space: nowrap;">
+                      <?php 
+                      $date = h($r['date'] ?? '');
+                      $dateRangeStart = h($r['date_range_start'] ?? '');
+                      $dateRangeEnd = h($r['date_range_end'] ?? '');
+                      
+                      if ($dateRangeStart && $dateRangeEnd && $dateRangeStart !== $dateRangeEnd) {
+                          echo '<div class="d-flex align-items-center">';
+                          echo '<i class="bi bi-calendar-range text-primary me-1" title="Date range: ' . $dateRangeStart . ' to ' . $dateRangeEnd . '"></i>';
+                          echo $date;
+                          echo '</div>';
+                      } else {
+                          echo $date;
+                      }
+                      ?>
+                    </td>
                     <td style="min-width: 250px; word-break: break-all;"><?php echo h($r['faculty_email'] ?? ''); ?></td>
-                    <td style="min-width: 80px; white-space: nowrap;"><?php echo h($r['leave_type'] ?? ''); ?></td>
-                    <td style="min-width: 80px; white-space: nowrap;"><?php echo h($r['session'] ?? ''); ?></td>
-                    <td style="min-width: 60px; white-space: nowrap; text-align: center;"><?php echo h($r['days'] ?? ''); ?></td>
+                    <td style="min-width: 80px; white-space: nowrap;">
+                      <span class="badge bg-<?php echo getLeaveTypeColor($r['leave_type'] ?? ''); ?>">
+                        <?php echo h($r['leave_type'] ?? ''); ?>
+                      </span>
+                    </td>
+                    <td style="min-width: 80px; white-space: nowrap;">
+                      <?php 
+                      $session = h($r['session'] ?? '');
+                      if ($session === 'FULL') {
+                          echo '<span class="badge bg-success">FULL</span>';
+                      } elseif ($session === 'FN') {
+                          echo '<span class="badge bg-warning">FN</span>';
+                      } elseif ($session === 'AN') {
+                          echo '<span class="badge bg-info">AN</span>';
+                      } else {
+                          echo $session;
+                      }
+                      ?>
+                    </td>
+                    <td style="min-width: 60px; white-space: nowrap; text-align: center;">
+                      <span class="badge bg-secondary"><?php echo h($r['days'] ?? ''); ?></span>
+                    </td>
                     <td style="min-width: 200px; word-break: break-word; max-width: 300px;"><?php echo h($r['reason'] ?? ''); ?></td>
                     <td style="min-width: 120px; white-space: nowrap;" class="text-end">
                       <button class="btn btn-sm btn-outline-primary me-1" onclick="editLeave('<?php echo h($item['id']); ?>', '<?php echo h($r['faculty_email'] ?? ''); ?>', '<?php echo h($r['leave_type'] ?? ''); ?>', '<?php echo h($r['session'] ?? ''); ?>', '<?php echo h($r['date'] ?? ''); ?>', '<?php echo h($r['to_date'] ?? $r['date'] ?? ''); ?>', '<?php echo h($r['days'] ?? ''); ?>', '<?php echo h(addslashes($r['reason'] ?? '')); ?>')">
@@ -825,6 +924,125 @@ function loadMoreEntries() {
         }
     }
 }
+
+// Function to calculate leave days based on date range and session
+function calculateDays() {
+    const fromDate = document.getElementById('fromDate').value;
+    const toDate = document.getElementById('toDate').value;
+    const session = document.getElementById('sessionSelect').value;
+    const calculatedDaysField = document.getElementById('calculatedDays');
+    const dateInfo = document.getElementById('dateInfo');
+    
+    if (!fromDate) {
+        dateInfo.textContent = 'Select dates to automatically calculate leave days';
+        return;
+    }
+    
+    // Set to_date if not provided
+    if (!toDate) {
+        document.getElementById('toDate').value = fromDate;
+    }
+    
+    const start = new Date(fromDate);
+    const end = new Date(toDate || fromDate);
+    
+    // Validate date range
+    if (end < start) {
+        dateInfo.innerHTML = '<span class="text-danger">To date cannot be before From date</span>';
+        calculatedDaysField.value = 1;
+        return;
+    }
+    
+    // Calculate business days (excluding weekends)
+    let businessDays = 0;
+    let currentDate = new Date(start);
+    
+    while (currentDate <= end) {
+        const dayOfWeek = currentDate.getDay();
+        // 0 = Sunday, 6 = Saturday
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            businessDays++;
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Calculate total days based on session
+    let totalDays = 0;
+    if (session === 'FULL') {
+        totalDays = businessDays;
+    } else {
+        // For half-day sessions, count each day as 0.5
+        totalDays = businessDays * 0.5;
+    }
+    
+    // Update the days field
+    calculatedDaysField.value = totalDays;
+    
+    // Update info text
+    const totalCalendarDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const weekendDays = totalCalendarDays - businessDays;
+    
+    dateInfo.innerHTML = `
+        <span class="text-success">
+            ${totalCalendarDays} calendar days (${businessDays} working days, ${weekendDays} weekends) = ${totalDays} leave days
+        </span>
+    `;
+}
+
+// Function to enable manual editing of days
+function manualDays() {
+    const calculatedDaysField = document.getElementById('calculatedDays');
+    const dateInfo = document.getElementById('dateInfo');
+    
+    if (calculatedDaysField.readOnly) {
+        calculatedDaysField.readOnly = false;
+        calculatedDaysField.classList.remove('form-control-plaintext');
+        calculatedDaysField.classList.add('form-control');
+        calculatedDaysField.focus();
+        dateInfo.innerHTML = '<span class="text-warning">Editing days manually</span>';
+    } else {
+        calculatedDaysField.readOnly = true;
+        calculatedDaysField.classList.remove('form-control');
+        calculatedDaysField.classList.add('form-control-plaintext');
+        calculateDays(); // Recalculate to restore auto-calculation
+    }
+}
+
+// Function to update session options based on leave type
+function updateSessionOptions(leaveType) {
+    const sessionSelect = document.getElementById('sessionSelect');
+    
+    // Clear existing options
+    sessionSelect.innerHTML = '';
+    
+    if (leaveType === 'OD' || leaveType === 'CCL') {
+        // OD and CCL typically only allow full day
+        sessionSelect.innerHTML = '<option value="FULL">Full Day</option>';
+    } else {
+        // Other leaves can have full day or half day
+        sessionSelect.innerHTML = `
+            <option value="FULL">Full Day</option>
+            <option value="FN">FN (Forenoon)</option>
+            <option value="AN">AN (Afternoon)</option>
+        `;
+    }
+    
+    // Recalculate days when session changes
+    calculateDays();
+}
+
+// Auto-calculate when session changes
+document.getElementById('sessionSelect').addEventListener('change', calculateDays);
+
+// Set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('fromDate').setAttribute('min', today);
+    document.getElementById('toDate').setAttribute('min', today);
+    
+    // Initialize calculation
+    calculateDays();
+});
 </script>
 </div>
 

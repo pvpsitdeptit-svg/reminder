@@ -128,12 +128,8 @@ function createUser($email, $password) {
 
 // Check if user is authenticated
 function isAuthenticated() {
-    error_log("isAuthenticated() - Session status: " . session_status());
-    error_log("isAuthenticated() - Checking session data");
-    error_log("isAuthenticated() - Session user exists: " . isset($_SESSION['user']));
-    
+    // Remove excessive logging for better performance
     if (isset($_SESSION['user']) && isset($_SESSION['user']['idToken'])) {
-        error_log("isAuthenticated() - User session found, checking token expiration");
         
         // Check if token is expired (simple check using iat claim)
         $idToken = $_SESSION['user']['idToken'];
@@ -145,13 +141,10 @@ function isAuthenticated() {
                 $currentTime = time();
                 $tokenExpiration = $payload['exp'];
                 
-                error_log("isAuthenticated() - Current time: " . $currentTime . ", Token expires: " . $tokenExpiration);
-                
                 if ($currentTime < $tokenExpiration) {
-                    error_log("isAuthenticated() - Token valid, user authenticated");
                     return true;
                 } else {
-                    error_log("isAuthenticated() - Token expired, clearing session");
+                    // Token expired, clear session
                     unset($_SESSION['user']);
                     return false;
                 }
@@ -159,16 +152,65 @@ function isAuthenticated() {
         }
         
         // Fallback - if we can't parse token, assume it's valid for 1 hour
-        error_log("isAuthenticated() - Using fallback authentication");
         return true;
     }
-    error_log("isAuthenticated() - No user session found");
     return false;
 }
 
 // Get current user
 function getCurrentUser() {
     return $_SESSION['user'] ?? null;
+}
+
+// Check if current user is admin
+function isAdmin() {
+    $user = getCurrentUser();
+    $email = $user['email'] ?? '';
+    return $email === 'admin@gmail.com';
+}
+
+// Get current user role
+function getUserRole() {
+    return isAdmin() ? 'admin' : 'faculty';
+}
+
+// Require admin role
+function requireAdmin() {
+    if (!isAuthenticated()) {
+        $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
+        header('Location: firebase_login.php');
+        exit();
+    }
+    
+    if (!isAdmin()) {
+        $_SESSION['error_message'] = 'Access denied. Admin privileges required.';
+        header('Location: faculty_dashboard.php');
+        exit();
+    }
+}
+
+// Require faculty role (or admin)
+function requireFaculty() {
+    if (!isAuthenticated()) {
+        error_log("requireFaculty: User not authenticated");
+        $_SESSION['redirect_url'] = $_SERVER['REQUEST_URI'];
+        header('Location: firebase_login.php');
+        exit();
+    }
+    
+    // Faculty pages are accessible to both faculty and admin
+    // No additional restrictions needed - all authenticated users can access
+    error_log("requireFaculty: Access granted to user");
+}
+
+// Redirect based on role
+function redirectToDashboard() {
+    if (isAdmin()) {
+        header('Location: index.php');
+    } else {
+        header('Location: faculty_dashboard.php');
+    }
+    exit();
 }
 
 // Logout function
